@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typoo - Improve Your Typing Skills</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --primary: #4f46e5;
+            --secondary: #a5b4fc;
+            --accent: #f59e0b;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #f3f4f6;
+        }
+        
+        .typing-box {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cursor {
+            position: relative;
+        }
+        
+        .cursor::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 2px;
+            height: 1.5rem;
+            background-color: var(--primary);
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .correct {
+            color: #10b981;
+        }
+        
+        .incorrect {
+            color: #ef4444;
+            text-decoration: underline;
+        }
+        
+        .current {
+            background-color: #e0e7ff;
+        }
+        
+        .completed {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-purple-500 to-blue-600 text-white py-3">
+        <div class="container mx-auto px-4 flex items-center">
+            <div class="flex items-center space-x-3">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/9ddabdb4-95b5-4673-a226-99009c0bb4ae.png" alt="Typoo keyboard logo" class="w-8 h-8">
+                <h1 class="text-xl font-bold tracking-tight">Typoo</h1>
+            </div>
+            <nav class="ml-auto">
+                <ul class="flex space-x-4 text-sm">
+                    <li><a href="#" class="px-2 py-1 rounded hover:bg-white/10">Home</a></li>
+                    <li><a href="#" class="px-2 py-1 rounded hover:bg-white/10">Lessons</a></li>
+                    <li><a href="#" class="px-2 py-1 rounded hover:bg-white/10">Tests</a></li>
+                    <li><a href="#" class="px-2 py-1 rounded bg-white/10">Profile</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <div class="max-w-2xl mx-auto">
+            <div class="mb-5 text-center">
+                <h2 class="text-xl font-bold mb-1 text-gray-800">Get Typing</h2>
+                <p class="text-xs text-gray-500 uppercase tracking-wider">Practice makes perfect</p>
+            </div>
+            
+            <div class="flex justify-between mb-5 text-sm">
+                <div class="text-gray-500">Speed: <span id="wpm" class="font-bold text-blue-600">0</span> WPM</div>
+                <div class="text-gray-500">Accuracy: <span id="accuracy" class="font-bold text-blue-600">100</span>%</div>
+                <div class="text-gray-500">Time left: <span id="time" class="font-bold text-blue-600">60</span>s</div>
+            </div>
+            
+            <div class="bg-white border border-gray-200 rounded p-4 mb-5">
+                <div id="text-display" class="mb-4 leading-normal text-gray-800 select-none font-mono">
+                    <!-- Text will be inserted here by JavaScript -->
+                </div>
+                <textarea 
+                    id="typing-input" 
+                    class="w-full p-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                    rows="4" 
+                    placeholder="Start typing here..."
+                    autofocus></textarea>
+                
+                <div class="mt-4 flex justify-between items-center">
+                    <button id="restart-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition">
+                        Restart
+                    </button>
+                    <div class="text-sm text-gray-600">
+                        Difficulty: 
+                        <select id="difficulty" class="border rounded px-2 py-1 ml-2">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Progress Track</h3>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-indigo-600" style="width: 0%"></div>
+                    </div>
+                    <p class="mt-2 text-gray-600">
+                        <span id="completed">0</span> of <span id="total">10</span> lessons completed
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-100 border-t py-4 text-center text-xs text-gray-500">
+        <div class="container mx-auto px-4">
+            © 2023 Typoo - Made with ❤️ for keyboard warriors
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sample texts for different difficulty levels
+            const texts = {
+                easy: [
+                    "The quick brown fox jumps over the lazy dog.",
+                    "Practice makes perfect when learning to type quickly.",
+                    "Typing is an essential skill in today's digital world."
+                ],
+                medium: [
+                    "The five boxing wizards jump quickly. This sentence contains all the letters in the English alphabet.",
+                    "Programming is the process of creating a set of instructions that tell a computer how to perform a task.",
+                    "In the JavaScript programming language, functions are first-class objects."
+                ],
+                hard: [
+                    "Azure VMs can run various operating systems including Windows Server and Linux distributions like Ubuntu or CentOS.",
+                    "The @keyframes rule specifies the animation code, creating complex animations with CSS properties changing over time.",
+                    "Quantum computing leverages quantum-mechanical phenomena such as superposition and entanglement to perform calculations."
+                ]
+            };
+            
+            // DOM elements
+            const textDisplay = document.getElementById('text-display');
+            const typingInput = document.getElementById('typing-input');
+            const restartBtn = document.getElementById('restart-btn');
+            const difficultySelect = document.getElementById('difficulty');
+            const wpmDisplay = document.getElementById('wpm');
+            const accuracyDisplay = document.getElementById('accuracy');
+            const timeDisplay = document.getElementById('time');
+            const progressBar = document.getElementById('progress-bar');
+            const completedDisplay = document.getElementById('completed');
+            const totalDisplay = document.getElementById('total');
+            
+            // State variables
+            let startTime;
+            let endTime;
+            let timerInterval;
+            let currentText = '';
+            let currentPosition = 0;
+            let correctChars = 0;
+            let totalChars = 0;
+            let mistakes = 0;
+            let isTyping = false;
+            
+            // Initialize the typing test
+            function initTypingTest() {
+                const difficulty = difficultySelect.value;
+                const randomIndex = Math.floor(Math.random() * texts[difficulty].length);
+                currentText = texts[difficulty][randomIndex];
+                currentPosition = 0;
+                correctChars = 0;
+                totalChars = currentText.length;
+                mistakes = 0;
+                isTyping = false;
+                
+                displayText();
+                typingInput.value = '';
+                typingInput.focus();
+                
+                // Reset stats
+                wpmDisplay.textContent = '0';
+                accuracyDisplay.textContent = '100';
+                timeDisplay.textContent = '60';
+                
+                // Stop any running timer
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+            }
+            
+            // Display the text to be typed with formatting
+            function displayText() {
+                let html = '';
+                
+                for (let i = 0; i < currentText.length; i++) {
+                    let char = currentText[i];
+                    let charClass = '';
+                    
+                    if (i < currentPosition) {
+                        charClass = 'completed';
+                        if (char === currentText[i]) {
+                            charClass += ' correct';
+                        } else {
+                            charClass += ' incorrect';
+                        }
+                    } else if (i === currentPosition) {
+                        charClass = 'current cursor';
+                    }
+                    
+                    if (char === ' ') {
+                        char = '·'; // Show spaces as dots for visibility
+                    }
+                    
+                    html += `<span class="${charClass}">${char}</span>`;
+                }
+                
+                textDisplay.innerHTML = html;
+            }
+            
+            // Start the typing test
+            function startTypingTest() {
+                startTime = new Date();
+                isTyping = true;
+                
+                // Start countdown timer
+                let seconds = 60;
+                timeDisplay.textContent = seconds;
+                
+                timerInterval = setInterval(() => {
+                    seconds--;
+                    timeDisplay.textContent = seconds;
+                    
+                    if (seconds <= 0) {
+                        endTypingTest();
+                    }
+                }, 1000);
+            }
+            
+            // End the typing test and show results
+            function endTypingTest() {
+                endTime = new Date();
+                clearInterval(timerInterval);
+                isTyping = false;
+                
+                // Calculate WPM (assuming 5 characters = 1 word)
+                const timeInMinutes = ((endTime - startTime) / 1000) / 60;
+                const wpm = Math.round((correctChars / 5) / timeInMinutes);
+                wpmDisplay.textContent = wpm;
+                
+                // Calculate accuracy
+                const accuracy = Math.round(((correctChars - mistakes) / correctChars) * 100);
+                accuracyDisplay.textContent = accuracy > 0 ? accuracy : 0;
+                
+                // Disable input
+                typingInput.disabled = true;
+            }
+            
+            // Handle typing input
+            typingInput.addEventListener('input', function(e) {
+                if (!isTyping && currentPosition === 0) {
+                    startTypingTest();
+                }
+                
+                const typedChar = typingInput.value[typingInput.value.length - 1];
+                const currentChar = currentText[currentPosition];
+                
+                if (typedChar === currentChar) {
+                    currentPosition++;
+                    correctChars++;
+                } else {
+                    mistakes++;
+                }
+                
+                // Check if user completed the text
+                if (currentPosition === currentText.length) {
+                    endTypingTest();
+                    return;
+                }
+                
+                displayText();
+                
+                // Calculate and display WPM in real-time
+                if (isTyping && correctChars > 0) {
+                    const currentTime = new Date();
+                    const timeInMinutes = ((currentTime - startTime) / 1000) / 60;
+                    const wpm = Math.round((correctChars / 5) / timeInMinutes);
+                    wpmDisplay.textContent = wpm;
+                    
+                    // Calculate accuracy
+                    const accuracy = Math.round(((correctChars - mistakes) / correctChars) * 100);
+                    accuracyDisplay.textContent = accuracy > 0 ? accuracy : 0;
+                }
+                
+                // Clear input to keep it single character
+                typingInput.value = '';
+            });
+            
+            // Restart button
+            restartBtn.addEventListener('click', initTypingTest);
+            
+            // Change difficulty
+            difficultySelect.addEventListener('change', initTypingTest);
+            
+            // Initialize the first test
+            initTypingTest();
+            
+            // Simulate some progress for demo
+            completedDisplay.textContent = '3';
+            totalDisplay.textContent = '10';
+            progressBar.style.width = '30%';
+        });
+    </script>
+</body>
+</html>
+
